@@ -1,0 +1,32 @@
+#!/bin/sh
+# pre-commit - every commit, whoever made it (human or AI agent), passes the same checks.
+# Enable once per clone:  git config core.hooksPath agent-guardrails/githooks
+# Emergency bypass (explain why in the commit message): git commit --no-verify
+#   -> the pre-merge gate runs the same scripts with --range, so a bypassed commit is caught there.
+#
+# 1) lint_eol.py           no CRLF+LF mix, no whole-file EOL flip, no CR CR LF
+# 2) lint_doc_meta.py      new modules need a [Module Spec] header linked to a doc + an anchor entry
+# 3) security_scan.py      secrets, personal data, public routes without login/rate limit, bare session
+#                          flags, unencrypted offsite writes, elevated tasks. Only added lines are judged.
+# Output is ASCII only (cp949 consoles).
+
+ROOT=$(git rev-parse --show-toplevel) || exit 1
+cd "$ROOT" || exit 1
+PY=python
+command -v "$PY" >/dev/null 2>&1 || PY=py
+G=agent-guardrails
+
+[ -z "$(git diff --cached --name-only)" ] && exit 0
+FAIL=0
+
+"$PY" $G/lint_eol.py >/dev/null || { "$PY" $G/lint_eol.py | grep -v 'BAD='; FAIL=1; }
+
+DM_OUT=$("$PY" $G/lint_doc_meta.py --staged) || { echo "$DM_OUT"; FAIL=1; }
+
+"$PY" $G/security_scan.py --staged || FAIL=1
+
+if [ "$FAIL" -ne 0 ]; then
+    echo "[pre-commit] FAILED - fix the above, or bypass with --no-verify only if you must (say why in the message)."
+    exit 1
+fi
+exit 0

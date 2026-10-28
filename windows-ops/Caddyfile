@@ -1,0 +1,47 @@
+# Front door - Caddy holds requests while app.py restarts.
+#
+# Why: app.py restart = kill + start (single-instance mutex, no overlap possible) = 5-9 s with nobody on :80,
+#      every user on the dashboard got bounced. Staging measurement, 10 s restart:
+#      direct 18 errors (GET and POST) -> through this file 0 errors (longest wait 9.8 s).
+#
+# Started by caddy_ctl.py (boot bat + watchdog), never by hand.
+# Env from caddy_ctl: APP_PORT (app.py, loopback), FRONT_PORT (default 80), LOG_DIR.
+#
+# Traps found in the staging experiment (do not "simplify" these away):
+#  - Site address must be host-agnostic (http://:80). With http://127.0.0.1:80 Caddy answers requests for
+#    the public Host header with an EMPTY 200 - the whole site blank.
+#  - header_up -X-Forwarded-For: the app treats any X-Forwarded-For as "from outside"; Caddy adds one by
+#    default -> bots/watchdog internal routes would be refused. CF-Connecting-IP passes through untouched,
+#    so the app's client-IP helper is unchanged.
+#    App-side contract this relies on: "internal" = remote_addr is loopback AND no Cloudflare header
+#    (CF-Connecting-IP, Cf-Ray, ...) AND no X-Forwarded-For - every public request arrives through
+#    cloudflared, which always sets the CF headers. Internal-only routes additionally require a shared key
+#    header, so "looks local" alone never opens them.
+#  - bind loopback only: behind Caddy every request reaches app.py from 127.0.0.1. If LAN/VPN could hit
+#    Caddy directly, a request with no Cloudflare headers would look "local". cloudflared runs on this PC.
+#  - Requests being processed at the exact kill moment: GET is retried here (200), POST fails (502) -
+#    same as before Caddy, and rare (requests take tens of ms).
+#  - lb_try_duration 45s, not 20s: the production cutover held a request 19.7 s - the restart script
+#    registers a task, then app.py boots. 20 s had no margin; past it users get 502.
+#  - admin off = no live reload. Config changes apply by restarting Caddy (gap ~0.7 s; a Windows client
+#    retries a refused loopback connect for ~2 s, so it is not seen).
+{
+	admin off
+	auto_https off
+	log {
+		output file {$LOG_DIR}/caddy.log {
+			roll_size 5MiB
+			roll_keep 3
+		}
+		level WARN
+	}
+}
+
+http://:{$FRONT_PORT:80} {
+	bind 127.0.0.1 [::1]
+	reverse_proxy 127.0.0.1:{$APP_PORT} {
+		lb_try_duration 45s
+		lb_try_interval 250ms
+		header_up -X-Forwarded-For
+	}
+}

@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 600" width="980" height="600" role="img" aria-labelledby="t d">
+  <title id="t">구성도: 서비스 경로와 변경 경로</title>
+  <desc id="d">왼쪽은 이용자 요청이 Cloudflare Tunnel, Caddy, 대기 인계 app, PostgreSQL 로 가는 서비스 경로와 age 암호화 백업. 오른쪽은 AI 에이전트의 변경이 hookify, git 훅, 머지 관문, 승인 배포 관문을 거쳐 서버로 가는 경로.</desc>
+  <style>
+    .panel { fill: none; stroke: #d0d7de; stroke-dasharray: 4 4; }
+    .box { fill: #f6f8fa; stroke: #d0d7de; }
+    .key { fill: #ddf4ff; stroke: #54aeff; }
+    .h { font: 600 14px system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; fill: #1f2328; }
+    .s { font: 12px system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; fill: #59636e; }
+    .cap { font: 700 13px system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; fill: #0969da; letter-spacing: .04em; }
+    .pill { fill: #ffffff; stroke: #d0d7de; }
+    .pillnew { fill: #dafbe1; stroke: #4ac26b; }
+    .a { stroke: #8c959f; stroke-width: 1.6; fill: none; }
+    .ah { fill: #8c959f; }
+    .deploy { stroke: #0969da; stroke-width: 1.8; fill: none; stroke-dasharray: 6 4; }
+    .dh { fill: #0969da; }
+    @media (prefers-color-scheme: dark) {
+      .panel { stroke: #3d444d; }
+      .box { fill: #161b22; stroke: #3d444d; }
+      .key { fill: #0c2d6b; stroke: #1f6feb; }
+      .h { fill: #e6edf3; }
+      .s { fill: #9198a1; }
+      .cap { fill: #4493f8; }
+      .pill { fill: #0d1117; stroke: #3d444d; }
+      .pillnew { fill: #0f3d1f; stroke: #2ea043; }
+      .a { stroke: #6e7681; }
+      .ah { fill: #6e7681; }
+      .deploy { stroke: #4493f8; }
+      .dh { fill: #4493f8; }
+    }
+  </style>
+  <defs>
+    <marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker>
+    <marker id="md" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dh" d="M0 0 L10 5 L0 10 z"/></marker>
+  </defs>
+
+  <!-- panels -->
+  <rect class="panel" x="16" y="16" width="464" height="568" rx="12"/>
+  <rect class="panel" x="500" y="16" width="464" height="568" rx="12"/>
+  <text class="cap" x="36" y="46">서비스 경로 · 윈도우 미니 PC 한 대</text>
+  <text class="cap" x="520" y="46">변경 경로 · 사람 + AI 에이전트</text>
+
+  <!-- left: service path -->
+  <rect class="box" x="40" y="66" width="260" height="54" rx="8"/>
+  <text class="h" x="56" y="90">이용자</text>
+  <text class="s" x="56" y="108">지사장 관제판 · 라이더 화면 (폰)</text>
+
+  <rect class="box" x="40" y="146" width="260" height="54" rx="8"/>
+  <text class="h" x="56" y="170">Cloudflare Tunnel</text>
+  <text class="s" x="56" y="188">공개 포트 없이 바깥 요청만 들어옴</text>
+
+  <rect class="key" x="40" y="226" width="260" height="54" rx="8"/>
+  <text class="h" x="56" y="250">Caddy :80 (앞문)</text>
+  <text class="s" x="56" y="268">재시작 동안 요청을 붙잡아 넘김</text>
+
+  <rect class="key" x="40" y="306" width="260" height="78" rx="8"/>
+  <text class="h" x="56" y="330">app.py 대기 인계 재시작</text>
+  <rect class="pill" x="56" y="342" width="96" height="26" rx="13"/>
+  <text class="s" x="80" y="360">old</text>
+  <rect class="pillnew" x="166" y="342" width="118" height="26" rx="13"/>
+  <text class="s" x="178" y="360">new --standby</text>
+
+  <rect class="box" x="40" y="410" width="260" height="54" rx="8"/>
+  <text class="h" x="56" y="434">PostgreSQL</text>
+  <text class="s" x="56" y="452">정산·회원·결제 · 공유 비용 상한</text>
+
+  <rect class="box" x="40" y="490" width="260" height="70" rx="8"/>
+  <text class="h" x="56" y="514">전 프로세스 Medium · 세션 1</text>
+  <text class="s" x="56" y="532">일회용 예약작업으로만 재시작</text>
+  <text class="s" x="56" y="549">워치독이 30분마다 토큰 확인</text>
+
+  <rect class="box" x="322" y="410" width="138" height="54" rx="8"/>
+  <text class="h" x="336" y="434">age 암호화</text>
+  <text class="s" x="336" y="452">공개키만 · fail-closed</text>
+
+  <rect class="box" x="322" y="490" width="138" height="70" rx="8"/>
+  <text class="h" x="336" y="514">오프사이트</text>
+  <text class="s" x="336" y="532">*.age 만 동기화</text>
+  <text class="s" x="336" y="549">개인키는 오너 PC</text>
+
+  <path class="a" d="M170 120 V146" marker-end="url(#m)"/>
+  <path class="a" d="M170 200 V226" marker-end="url(#m)"/>
+  <path class="a" d="M170 280 V306" marker-end="url(#m)"/>
+  <path class="a" d="M170 384 V410" marker-end="url(#m)"/>
+  <path class="a" d="M300 437 H322" marker-end="url(#m)"/>
+  <path class="a" d="M391 464 V490" marker-end="url(#m)"/>
+  <text class="s" x="310" y="300">대기 19.7s → 1s 미만</text>
+
+  <!-- right: change path -->
+  <rect class="box" x="524" y="66" width="280" height="54" rx="8"/>
+  <text class="h" x="540" y="90">AI 에이전트 · 오너</text>
+  <text class="s" x="540" y="108">Claude Code · Gemini · human</text>
+
+  <rect class="box" x="524" y="146" width="280" height="54" rx="8"/>
+  <text class="h" x="540" y="170">hookify (편집하는 순간)</text>
+  <text class="s" x="540" y="188">비밀 파일 쓰기 차단 · 위험 패턴 경고</text>
+
+  <rect class="key" x="524" y="226" width="280" height="54" rx="8"/>
+  <text class="h" x="540" y="250">git 훅 (커밋)</text>
+  <text class="s" x="540" y="268">보안 S1–S7 · 줄바꿈 · 문서 · Agent 트레일러</text>
+
+  <rect class="key" x="524" y="306" width="280" height="54" rx="8"/>
+  <text class="h" x="540" y="330">머지 관문 (staging → master)</text>
+  <text class="s" x="540" y="348">범위 재검사 · 테스트 1,864개</text>
+
+  <rect class="box" x="524" y="386" width="280" height="54" rx="8"/>
+  <text class="h" x="540" y="410">오너 승인 (그 턴, 채팅)</text>
+  <text class="s" x="540" y="428">지난 승인은 다시 쓰지 않음</text>
+
+  <rect class="key" x="524" y="466" width="280" height="54" rx="8"/>
+  <text class="h" x="540" y="490">agent_ship (배포 관문)</text>
+  <text class="s" x="540" y="508">관리자 셸 거부 · Caddy 확인 · 같은 bat</text>
+
+  <path class="a" d="M664 120 V146" marker-end="url(#m)"/>
+  <path class="a" d="M664 200 V226" marker-end="url(#m)"/>
+  <path class="a" d="M664 280 V306" marker-end="url(#m)"/>
+  <path class="a" d="M664 360 V386" marker-end="url(#m)"/>
+  <path class="a" d="M664 440 V466" marker-end="url(#m)"/>
+
+  <text class="s" x="816" y="252">새로 들어온 줄만</text>
+  <text class="s" x="816" y="268">비밀값 원문 안 찍음</text>
+  <text class="s" x="816" y="332">--no-verify 커밋도</text>
+  <text class="s" x="816" y="348">여기서 다시 잡음</text>
+
+  <!-- deploy arrow: agent_ship -> app -->
+  <path class="deploy" d="M524 493 H490 V345 H300" marker-end="url(#md)"/>
+  <text class="s" x="372" y="336">배포</text>
+</svg>

@@ -1,0 +1,24 @@
+#!/bin/sh
+# commit-msg - a commit that changes code must carry its docs, and must say who made it.
+#   lint_doc_meta.py --commit-msg   code staged but no .md -> blocked, unless a 'Docs-skip: <reason>' line
+#   lint_commit_agent.py            an 'Agent: <model>' or 'Agent: human' trailer
+# Real merge commits are exempt. Output is ASCII only (cp949 consoles).
+
+ROOT=$(git rev-parse --show-toplevel) || exit 1
+cd "$ROOT" || exit 1
+PY=python
+command -v "$PY" >/dev/null 2>&1 || PY=py
+G=agent-guardrails
+
+FAIL=0
+if ! "$PY" $G/lint_doc_meta.py --commit-msg "$1" >/dev/null; then
+    "$PY" $G/lint_doc_meta.py --commit-msg "$1"
+    echo "[commit-msg] FAILED - add the docs to this commit, or a 'Docs-skip: <reason>' line to the message."
+    FAIL=1
+fi
+
+if ! "$PY" $G/lint_commit_agent.py --commit-msg "$1"; then
+    echo "[commit-msg] FAILED - add an 'Agent:' trailer, e.g.  Agent: Claude Opus 5.5"
+    FAIL=1
+fi
+exit $FAIL

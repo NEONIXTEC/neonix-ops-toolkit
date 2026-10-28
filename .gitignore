@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+*.key
+*.age
+cache/
+.security_baseline.json

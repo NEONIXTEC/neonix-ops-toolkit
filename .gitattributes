@@ -1,0 +1,2 @@
+# keep every file's bytes as written (lint_eol.py keeps each file's style consistent)
+* -text
