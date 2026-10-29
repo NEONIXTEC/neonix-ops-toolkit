@@ -10,7 +10,7 @@ API 키는 1개가 기본이고, 설정으로 2~3개를 등록하면 한 키에 
 
 ```
 브라우저 (React 위젯) ─ POST /api/chat ─▶ FastAPI (server/) ─▶ SupportBot.answer
-                                              └─ 클라이언트별 분당 20회 상한
+                                              └─ 클라이언트별 분당 20회 + 전체 분당 600회 상한
 
 질문 ─▶ KeywordGuard ─(환불·해지·소송…)─▶ 고정 안내 (모델 호출 없음)
           │
@@ -37,7 +37,7 @@ API 키는 1개가 기본이고, 설정으로 2~3개를 등록하면 한 키에 
 | [`support_bot/bot.py`](support_bot/bot.py) | 조립: 가드 → 지식 → 모델 → 로그. 행동 프롬프트는 긍정형 2단계 |
 | [`support_bot/providers/`](support_bot/providers) | Gemini(google-genai)·Claude(anthropic) 어댑터 — 업체 오류를 공통 오류로 번역 |
 | [`knowledge/faq.md`](knowledge/faq.md) | 가상 서비스 지식 문서 예시 |
-| [`server/`](server) | FastAPI: `POST /api/chat`, 클라이언트별 분당 상한, 키 없이 도는 데모 provider, `web/dist` 가 있으면 화면도 같이 제공 |
+| [`server/`](server) | FastAPI: `POST /api/chat`, 클라이언트별·전체 분당 상한(주소를 바꿔 가며 쏴도 한도 중인 클라이언트 기록은 안 지워짐), 키 없이 도는 데모 provider, `web/dist` 가 있으면 화면도 같이 제공 |
 | [`web/`](web) | Vite + React + TypeScript 채팅 위젯: 메시지 목록·입력·답변 쓰는 중 표시·원인별 실패 문구·라이트/다크. 상태는 `useReducer` 하나 |
 | [`tests/`](tests) | 파이썬 37개 — 실제 API 없이 가짜 클라이언트·가짜 시계, API 는 FastAPI TestClient |
 | [`web/src/*.test.ts(x)`](web/src) | 화면 11개 — Vitest + Testing Library, 서버 없이 가짜 전송 함수 |
@@ -97,6 +97,8 @@ npm run dev
 
 한 프로세스로 보려면 `npm run build` 뒤 1)만 띄우고 http://localhost:8000 을 연다(서버가 `web/dist` 를 같이 낸다).
 실제 모델로 바꾸려면 서버를 띄우는 셸에 `SUPPORT_BOT_PROVIDER=gemini`(또는 `claude`), `SUPPORT_BOT_API_KEYS=키1,키2`, `SUPPORT_BOT_MODELS=…` 를 준다. 키는 그 프로세스 환경으로만 넣고 레포 파일에는 두지 않는다.
+
+요청 상한은 일부러 "막히는 쪽"으로 정했다. 답 하나가 API 호출 하나라, 대량 요청이 오면 비용이 새는 것보다 잠깐 모두 막히는 쪽이 낫다. 봇 대량 요청에 대한 가용성은 이 프로세스 앞단의 일이다 — 실제 서비스는 CDN/WAF 봇 차단 뒤에 둔다(운영은 Cloudflare).
 
 화면에서 지킨 것:
 - 실패 문구는 원인별 한 문장 — 연결 실패 / 60초 초과 / 질문 과다(429) / 입력 오류(422) / 서버 오류를 각각 다르게 쓴다. 서버 쪽 실패(키 거부·전부 실패)는 서버가 준 원인별 문장을 그대로 보여 준다.

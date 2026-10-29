@@ -4,7 +4,7 @@ pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
 from conftest import FakeClient, FakeClock  # noqa: E402
-from server.app import RateLimiter, build_bot_from_env, create_app  # noqa: E402
+from server.app import RateLimiter, build_bot_from_env, client_key, create_app  # noqa: E402
 from support_bot import KeywordGuard, KnowledgeBase, LLMCaller, SupportBot  # noqa: E402
 from support_bot import errors as E  # noqa: E402
 
@@ -50,6 +50,55 @@ def test_rate_limit_per_client(demo_bot):
     assert codes == [200, 200, 429]
     clock.t += 60
     assert c.post("/api/chat", json={"message": "엑셀"}).status_code == 200
+
+
+def test_rate_limiter_memory_stays_bounded_under_rotating_clients():
+    clock = FakeClock()
+    rl = RateLimiter(limit=2, window_sec=60, max_clients=100, global_limit=10**9, clock=clock)
+    for i in range(10_000):                       # attacker rotating addresses, never returning
+        rl.allowed("10.0.%d.%d" % (i // 256, i % 256))
+        clock.t += 0.01
+    assert len(rl) <= 100
+
+
+def test_flooding_new_addresses_cannot_reset_an_active_client():
+    clock = FakeClock()
+    rl = RateLimiter(limit=2, window_sec=60, max_clients=50, global_limit=10**9, clock=clock)
+    assert rl.allowed("victim") and rl.allowed("victim")
+    assert rl.allowed("victim") is False
+    refused = sum(not rl.allowed("x%d" % i) for i in range(1000))   # all inside the same window
+    assert refused == 1000 - 49                   # table full of active clients: newcomers refused
+    assert rl.allowed("victim") is False          # victim's window was not evicted
+    clock.t += 60
+    assert rl.allowed("newcomer")                 # after the window, stale entries make room again
+
+
+def test_global_cap_limits_rotating_addresses():
+    clock = FakeClock()
+    rl = RateLimiter(limit=20, window_sec=60, global_limit=30, clock=clock)
+    allowed = sum(rl.allowed("c%d" % i) for i in range(100))
+    assert allowed == 30
+    clock.t += 60
+    assert rl.allowed("c999")
+
+
+def test_ipv6_clients_are_grouped_by_64():
+    assert client_key("2001:db8:1:2:aaaa::1") == client_key("2001:db8:1:2:bbbb::9")
+    assert client_key("2001:db8:1:2::1") != client_key("2001:db8:1:3::1")
+    assert client_key("203.0.113.7") == "203.0.113.7"
+
+
+def test_ipv6_short_forms_are_normalized():
+    # same /64, different text - string splitting would give two keys and let a client dodge the cap
+    assert client_key("2001:db8::1") == client_key("2001:db8::2") == "2001:db8::/64"
+    assert client_key("2001:db8:0:0::ffff") == client_key("2001:0db8::1")
+    assert client_key("::1") == "::/64"
+
+
+def test_ipv4_mapped_ipv6_counts_as_ipv4_and_garbage_does_not_raise():
+    assert client_key("::ffff:1.2.3.4") == "1.2.3.4" == client_key("1.2.3.4")
+    assert client_key("testclient") == "testclient"
+    assert client_key("") == "unknown"
 
 
 def test_provider_outage_returns_a_cause_specific_message(tmp_path):
