@@ -96,6 +96,7 @@ npm run dev
 ```
 
 한 프로세스로 보려면 `npm run build` 뒤 1)만 띄우고 http://localhost:8000 을 연다(서버가 `web/dist` 를 같이 낸다).
+프록시(CDN·리버스 프록시) 뒤에 둘 때는 `uvicorn server.app:app --proxy-headers --forwarded-allow-ips=<프록시 주소>` 로 띄운다 — 그래야 사람별 상한이 프록시 IP 하나로 합쳐지지 않고, 신뢰한 프록시가 준 주소만 클라이언트 IP 로 쓴다(앱 코드는 전달 헤더를 직접 읽지 않는다, 위조되므로).
 실제 모델로 바꾸려면 서버를 띄우는 셸에 `SUPPORT_BOT_PROVIDER=gemini`(또는 `claude`), `SUPPORT_BOT_API_KEYS=키1,키2`, `SUPPORT_BOT_MODELS=…` 를 준다. 키는 그 프로세스 환경으로만 넣고 레포 파일에는 두지 않는다.
 
 요청 상한은 일부러 "막히는 쪽"으로 정했다. 답 하나가 API 호출 하나라, 대량 요청이 오면 비용이 새는 것보다 잠깐 모두 막히는 쪽이 낫다. 봇 대량 요청에 대한 가용성은 이 프로세스 앞단의 일이다 — 실제 서비스는 CDN/WAF 봇 차단 뒤에 둔다(운영은 Cloudflare).

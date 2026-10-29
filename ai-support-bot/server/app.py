@@ -79,6 +79,9 @@ class RateLimiter:
     briefly blocks everyone is preferred to a flood that runs up the bill. Availability against bot floods
     belongs in front of this process - a real deployment sits behind a CDN/WAF with bot protection
     (production runs behind Cloudflare).
+    Behind a proxy every request comes from the proxy's address, so per-client keys collapse into one. Start
+    uvicorn with --proxy-headers --forwarded-allow-ips=<proxy address>: only a trusted proxy's X-Forwarded-For
+    then becomes request.client.host. This code never reads forwarding headers itself (they are forgeable).
     """
 
     def __init__(self, limit=20, window_sec=60.0, max_clients=10_000, global_limit=600, clock=time.monotonic):
