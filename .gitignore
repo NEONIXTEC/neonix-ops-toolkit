@@ -5,3 +5,8 @@ __pycache__/
 *.age
 cache/
 .security_baseline.json
+node_modules/
+dist/
+.venv/
+logs/
+*.tsbuildinfo

@@ -3,7 +3,7 @@
 **NEONIX_TEC 이 직접 설계·개발·운영하는 배달 지사 관제·정산 SaaS 에서 만든 운영·보안 도구 모음.**
 윈도우 서버 한 대에서 무중단 배포, 암호화 백업, 그리고 여러 AI 코딩 에이전트를 규칙으로 통제하는 개발 방식을 코드로 관리한다.
 
-![restart wait](https://img.shields.io/badge/restart%20wait-%3C1s-2ea44f) ![security rules](https://img.shields.io/badge/security%20rules-S1--S7-0969da) ![tests](https://img.shields.io/badge/tests-1%2C864-0969da) ![server](https://img.shields.io/badge/server-Windows-0078D6) ![stack](https://img.shields.io/badge/stack-Flask%20%7C%20PostgreSQL%20%7C%20Caddy-555555) ![license](https://img.shields.io/badge/license-MIT-blue)
+![restart wait](https://img.shields.io/badge/restart%20wait-%3C1s-2ea44f) ![security rules](https://img.shields.io/badge/security%20rules-S1--S7-0969da) ![tests](https://img.shields.io/badge/tests-1%2C864-0969da) ![server](https://img.shields.io/badge/server-Windows-0078D6) ![stack](https://img.shields.io/badge/stack-Flask%20%7C%20PostgreSQL%20%7C%20Caddy-555555) ![demo](https://img.shields.io/badge/demo-React%20%7C%20FastAPI-087ea4) ![license](https://img.shields.io/badge/license-MIT-blue)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="구성도: 왼쪽은 이용자 → Cloudflare Tunnel → Caddy → 대기 인계 app → PostgreSQL 과 age 암호화 백업, 오른쪽은 AI 에이전트 → hookify → git 훅 S1–S7 → 머지 관문 → 오너 승인 → agent_ship 배포 관문" width="100%">
@@ -33,7 +33,7 @@
 | [`windows-ops/`](windows-ops) | 윈도우 서버 무중단 운영: 관리자 권한 없이 재시작, 대기 인계, 앞문 Caddy, 승인 뒤에만 도는 배포 관문 | [`restart_app_medium.ps1`](windows-ops/restart_app_medium.ps1) |
 | [`backup-encryption/`](backup-encryption) | 오프사이트 백업을 공개키로만 잠그고(fail-closed), 오너 PC 에서만 열어 검증 | [`age_encrypt.py`](backup-encryption/age_encrypt.py) |
 | [`csp-migration/`](csp-migration) | CSP `'unsafe-inline'` 제거용 30줄 이벤트 위임 + CDN 캐시를 비켜 가는 내용 해시 | [`nx_on.js`](csp-migration/nx_on.js) |
-| [`ai-support-bot/`](ai-support-bot) | 운영 중인 AI 상담봇 구조 데모: 지식 문서 핫리로드, API 키 1~3개 failover·재시도·마감 호출 래퍼, 장애 알림, 개인정보 마스킹 로그. Gemini·Claude 교체 가능 | [`llm.py`](ai-support-bot/support_bot/llm.py) |
+| [`ai-support-bot/`](ai-support-bot) | 운영 중인 AI 상담봇 구조 데모: 지식 문서 핫리로드, API 키 1~3개 failover·재시도·마감 호출 래퍼, 장애 알림, 개인정보 마스킹 로그. Gemini·Claude 교체 가능. React 채팅 위젯 + FastAPI 서버 | [`llm.py`](ai-support-bot/support_bot/llm.py) |
 
 ## 설계 요약
 
@@ -60,7 +60,7 @@ Operations and security tooling from a delivery-branch SaaS that NEONIX_TEC desi
 - **Encrypted offsite backups**: age public-key encryption on the server, fail-closed, private key only on the owner's PC.
 - **Agent governance**: edit-time hookify rules, commit hooks with security rules S1–S7, a merge gate that re-checks the whole range, and an approval-gated deploy helper.
 - **CSP migration**: a 30-line event-delegation dispatcher to drop `'unsafe-inline'`, plus content-hash cache busting.
-- **AI support bot**: hot-reloaded knowledge file, an LLM call wrapper with 1-3 API keys and failover, retries, a deadline and serialization, throttled outage alerts and a masked chat log; Gemini or Claude behind one adapter interface.
+- **AI support bot**: hot-reloaded knowledge file, an LLM call wrapper with 1-3 API keys and failover, retries, a deadline and serialization, throttled outage alerts and a masked chat log; Gemini or Claude behind one adapter interface; a React + TypeScript chat widget over a FastAPI endpoint.
 - Business logic and customer data are not included. MIT licensed.
 
 ## 라이선스

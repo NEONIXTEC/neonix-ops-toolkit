@@ -5,7 +5,13 @@ NEONIX_TEC 이 운영 중인 SaaS 의 1:1 AI 상담봇 구조를, 운영 코드�
 운영은 Gemini API 로 돌고, 이 데모는 Gemini·Claude 를 바꿔 끼울 수 있게 어댑터를 나눴다.
 API 키는 1개가 기본이고, 설정으로 2~3개를 등록하면 한 키에 장애가 났을 때 다음 키로 넘어간다(failover).
 
+<p align="center"><img src="docs/chat-widget.png" alt="채팅 위젯, 왼쪽 라이트 모드 오른쪽 다크 모드. 가상 서비스 데이터로 답하는 데모 모드" width="100%"></p>
+<p align="center"><sub>React 채팅 위젯 (라이트 / 다크) · 키 없이 도는 데모 모드 · 가상 서비스 데이터</sub></p>
+
 ```
+브라우저 (React 위젯) ─ POST /api/chat ─▶ FastAPI (server/) ─▶ SupportBot.answer
+                                              └─ 클라이언트별 분당 20회 상한
+
 질문 ─▶ KeywordGuard ─(환불·해지·소송…)─▶ 고정 안내 (모델 호출 없음)
           │
           ▼
@@ -31,7 +37,10 @@ API 키는 1개가 기본이고, 설정으로 2~3개를 등록하면 한 키에 
 | [`support_bot/bot.py`](support_bot/bot.py) | 조립: 가드 → 지식 → 모델 → 로그. 행동 프롬프트는 긍정형 2단계 |
 | [`support_bot/providers/`](support_bot/providers) | Gemini(google-genai)·Claude(anthropic) 어댑터 — 업체 오류를 공통 오류로 번역 |
 | [`knowledge/faq.md`](knowledge/faq.md) | 가상 서비스 지식 문서 예시 |
-| [`tests/`](tests) | 실제 API 없이 가짜 클라이언트·가짜 시계로 30개 |
+| [`server/`](server) | FastAPI: `POST /api/chat`, 클라이언트별 분당 상한, 키 없이 도는 데모 provider, `web/dist` 가 있으면 화면도 같이 제공 |
+| [`web/`](web) | Vite + React + TypeScript 채팅 위젯: 메시지 목록·입력·답변 쓰는 중 표시·원인별 실패 문구·라이트/다크. 상태는 `useReducer` 하나 |
+| [`tests/`](tests) | 파이썬 37개 — 실제 API 없이 가짜 클라이언트·가짜 시계, API 는 FastAPI TestClient |
+| [`web/src/*.test.ts(x)`](web/src) | 화면 11개 — Vitest + Testing Library, 서버 없이 가짜 전송 함수 |
 
 ## 왜 이렇게 했나 — 운영 실측 한 줄씩
 
@@ -71,11 +80,34 @@ print(bot.answer(user_id, "예약 알림 문구는 어디서 바꿔요?").text)
 
 모델을 바꾸려면 어댑터만 바꾼다(`ClaudeClient()` 기본 모델 `claude-opus-5-5`). 재시도·마감·알림 규칙은 `LLMCaller` 한 곳이라 그대로다.
 
+## 채팅 화면 실행 (키 없이 데모 모드)
+
+```bash
+# 1) API 서버
+cd ai-support-bot
+python -m venv server/.venv
+server/.venv/Scripts/python -m pip install -r server/requirements.txt     # macOS/Linux: server/.venv/bin/python
+server/.venv/Scripts/python -m uvicorn server.app:app --port 8000
+
+# 2) 화면 (다른 터미널) - http://localhost:5173, /api 는 8000 으로 프록시
+cd ai-support-bot/web
+npm install
+npm run dev
+```
+
+한 프로세스로 보려면 `npm run build` 뒤 1)만 띄우고 http://localhost:8000 을 연다(서버가 `web/dist` 를 같이 낸다).
+실제 모델로 바꾸려면 서버를 띄우는 셸에 `SUPPORT_BOT_PROVIDER=gemini`(또는 `claude`), `SUPPORT_BOT_API_KEYS=키1,키2`, `SUPPORT_BOT_MODELS=…` 를 준다. 키는 그 프로세스 환경으로만 넣고 레포 파일에는 두지 않는다.
+
+화면에서 지킨 것:
+- 실패 문구는 원인별 한 문장 — 연결 실패 / 60초 초과 / 질문 과다(429) / 입력 오류(422) / 서버 오류를 각각 다르게 쓴다. 서버 쪽 실패(키 거부·전부 실패)는 서버가 준 원인별 문장을 그대로 보여 준다.
+- 보내는 동안 "답변 쓰는 중" 점 3개, 보내기 버튼 잠김. 한글 입력 중 Enter(조합 확정)로 잘못 보내지 않게 `isComposing` 을 본다.
+- 라이트/다크는 CSS 변수 한 벌. 첫 방문은 OS 설정을 따르고, 고른 값은 localStorage(막혀 있으면 그냥 안 남김).
+
 ## 테스트
 
 ```bash
-pip install pytest
-python -m pytest -q tests
+server/.venv/Scripts/python -m pytest -q tests      # 파이썬 37개 (fastapi 가 없으면 API 테스트 7개는 건너뜀)
+cd web && npm test                                   # 화면 11개
 ```
 
 실제 API 를 부르지 않는다. 가짜 클라이언트가 정해진 순서로 답·오류를 돌려주고, 가짜 시계가 `sleep` 을 즉시 처리해서 45초 마감·30분 알림 창도 0.5초 안에 검증된다. 직렬화 테스트만 진짜 스레드 5개로 "동시에 1건만 나간다"를 잰다.
