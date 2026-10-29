@@ -33,6 +33,7 @@
 | [`windows-ops/`](windows-ops) | 윈도우 서버 무중단 운영: 관리자 권한 없이 재시작, 대기 인계, 앞문 Caddy, 승인 뒤에만 도는 배포 관문 | [`restart_app_medium.ps1`](windows-ops/restart_app_medium.ps1) |
 | [`backup-encryption/`](backup-encryption) | 오프사이트 백업을 공개키로만 잠그고(fail-closed), 오너 PC 에서만 열어 검증 | [`age_encrypt.py`](backup-encryption/age_encrypt.py) |
 | [`csp-migration/`](csp-migration) | CSP `'unsafe-inline'` 제거용 30줄 이벤트 위임 + CDN 캐시를 비켜 가는 내용 해시 | [`nx_on.js`](csp-migration/nx_on.js) |
+| [`ai-support-bot/`](ai-support-bot) | 운영 중인 AI 상담봇 구조 데모: 지식 문서 핫리로드, API 키 1~3개 failover·재시도·마감 호출 래퍼, 장애 알림, 개인정보 마스킹 로그. Gemini·Claude 교체 가능 | [`llm.py`](ai-support-bot/support_bot/llm.py) |
 
 ## 설계 요약
 
@@ -59,6 +60,7 @@ Operations and security tooling from a delivery-branch SaaS that NEONIX_TEC desi
 - **Encrypted offsite backups**: age public-key encryption on the server, fail-closed, private key only on the owner's PC.
 - **Agent governance**: edit-time hookify rules, commit hooks with security rules S1–S7, a merge gate that re-checks the whole range, and an approval-gated deploy helper.
 - **CSP migration**: a 30-line event-delegation dispatcher to drop `'unsafe-inline'`, plus content-hash cache busting.
+- **AI support bot**: hot-reloaded knowledge file, an LLM call wrapper with 1-3 API keys and failover, retries, a deadline and serialization, throttled outage alerts and a masked chat log; Gemini or Claude behind one adapter interface.
 - Business logic and customer data are not included. MIT licensed.
 
 ## 라이선스
