@@ -3,7 +3,7 @@
 **NEONIX_TEC 이 직접 설계·개발·운영하는 배달 지사 관제·정산 SaaS 에서 만든 운영·보안 도구 모음.**
 윈도우 서버 한 대에서 무중단 배포, 암호화 백업, 그리고 여러 AI 코딩 에이전트를 규칙으로 통제하는 개발 방식을 코드로 관리한다.
 
-![restart wait](https://img.shields.io/badge/restart%20wait-%3C1s-2ea44f) ![security rules](https://img.shields.io/badge/security%20rules-S1--S7-0969da) ![tests](https://img.shields.io/badge/tests-1%2C864-0969da) ![server](https://img.shields.io/badge/server-Windows-0078D6) ![stack](https://img.shields.io/badge/stack-Flask%20%7C%20PostgreSQL%20%7C%20Caddy-555555) ![demo](https://img.shields.io/badge/demo-React%20%7C%20FastAPI-087ea4) ![license](https://img.shields.io/badge/license-MIT-blue)
+![restart wait](https://img.shields.io/badge/restart%20wait-%3C1s-2ea44f) ![security rules](https://img.shields.io/badge/security%20rules-S1--S7-0969da) ![tests](https://img.shields.io/badge/tests-1%2C900%2B-0969da) ![server](https://img.shields.io/badge/server-Windows-0078D6) ![stack](https://img.shields.io/badge/stack-Flask%20%7C%20PostgreSQL%20%7C%20Caddy-555555) ![demo](https://img.shields.io/badge/demo-React%20%7C%20FastAPI-087ea4) ![license](https://img.shields.io/badge/license-MIT-blue)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="구성도: 왼쪽은 이용자 → Cloudflare Tunnel → Caddy → 대기 인계 app → PostgreSQL 과 age 암호화 백업, 오른쪽은 AI 에이전트 → hookify → git 훅 S1–S7 → 머지 관문 → 오너 승인 → agent_ship 배포 관문" width="100%">
@@ -24,6 +24,17 @@
 | **디스코드 관제 봇** · 2025년 11월~ | 운영 알림·관제 카드. 1년 가까이 무중단 운영 |
 | 실사용 기능 | 회원·요금제 결제와 입금 매칭, 관리자·지사장 2FA(TOTP, 백업 코드 복구), 무중단 배포, age 암호화 오프사이트 백업 |
 | 개발 방식 | 여러 AI 코딩 에이전트(Claude Code, Gemini)를 규칙으로 통제하며 개발·운영. 사람이 모든 diff 를 읽지 않아도 같은 관문을 통과해야 반영 |
+
+## 기술 스택
+
+| 분야 | 기술 |
+|---|---|
+| 웹 | Python · Flask · Waitress · Jinja · SQLAlchemy · JavaScript · PostgreSQL |
+| 결제·인증 | PortOne · KG이니시스 카드 자동결제 · 카카오·구글 로그인 · 2단계 인증(TOTP) |
+| 앱 | Capacitor · Android(Java) |
+| 앞단·운영 | Windows Server · PowerShell · Caddy · Cloudflare · Sentry · healthchecks.io · 디스코드 관제 봇 |
+| 보안·백업 | CSP nonce · age 공개키 암호화 · 커밋 단계 보안 스캔 |
+| AI | Gemini API(상담 1차 응대) · AI 코딩 에이전트 여러 세션을 규칙으로 통제 |
 
 ## 이 레포에서 쓸 수 있는 것
 
